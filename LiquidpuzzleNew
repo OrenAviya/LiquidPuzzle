@@ -1,0 +1,52 @@
+class Game:
+    def __init__(self, colors, bins):
+        self.colors = colors
+        self.bins = bins
+
+    def is_valid_move(self, from_bin, to_bin):
+        if from_bin == to_bin:
+            return False
+        
+        if to_bin >= len(self.bins):
+            return True
+        
+        if self.bins[to_bin] == []:
+            return True
+        
+        if self.bins[from_bin][-1] == self.bins[to_bin][-1]:
+            return len(self.bins[to_bin]) < len(self.colors)
+        
+        return False
+    
+    def make_move(self, from_bin, to_bin):
+        if self.is_valid_move(from_bin, to_bin):
+            self.bins[to_bin].append(self.bins[from_bin].pop())
+            return True
+        return False
+    
+    def is_game_over(self):
+        for bin in self.bins:
+            if bin != [] and bin != sorted(bin) :
+                return False
+        return True
+    
+    def print_state(self):
+        for i, bin in enumerate(self.bins):
+            print(f"Bin {i}: {bin}")
+            
+colors = [1, 2, 3, 4]
+bins = [[3, 1, 2], [2, 4, 3], [1, 3, 1, 2], []]
+
+game = Game(colors, bins)
+game.print_state()
+
+while not game.is_game_over():
+    from_bin = int(input("Enter source bin: "))
+    to_bin = int(input("Enter destination bin: "))
+    
+    if game.make_move(from_bin, to_bin):
+        game.print_state()
+    else:
+        print("Invalid move, try again.")
+
+print("Game over!")
