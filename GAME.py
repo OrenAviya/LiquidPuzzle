@@ -1,55 +1,62 @@
-def initialize_game():
-  """
-  מאתחל את המשחק ומגדיר משתנים גלובליים.
-  """
 
-  global initial_state, num_colors, empty_tanks, full_tanks,  MaxColorsInTank 
+class GameVariables:
+  empty_tanks = 2
+  full_tanks = 8
+  size = 8
+  num_colors = 8
 
-  # הגדרת מצב התחלתי
-  initial_state = [
-    [1, 2],
-    [3, 4, 5],
-    [6],
-  ]
+  initial_state = [[1,3,5,4,4,7,6,1],[2,2,0,0,4,3,6,7],
+          [2,1,1,4,5,6,0,2],[0,6,6,5,4,7,7,3],
+        [3,4,1,0,5,7,4,4],[7,6,2,2,3,1,0,0],
+        [7,3,3,1,2,5,5,6],[7,6,5,5,3,2,1,0],[],[]]
 
-  # הגדרת מספר צבעים
-  num_colors = get_number_of_unique_colors(initial_state)
+  def __init__(self, initial_state, num_colors, empty_tanks, full_tanks, size):
+      self.initial_state = initial_state
+      self.num_colors = num_colors
+      self.empty_tanks = empty_tanks
+      self.full_tanks = full_tanks
+      self.size = size
 
-  # ספירת מבחנות ריקות ומלאות
-  empty_tanks = count_empty_tanks(initial_state)
-  full_tanks = count_full_tanks(initial_state) 
-  MaxColorsInTank = get_tank_size(initial_state)
 
-# פונקציות עזר (לא מוצגות כאן)
-def count_empty_tanks(state):
-  # סופרת את מספר המבחנות הריקות במצב נתון
-  pass
+"""
+game_variables = GAME.game_variables  # גישה לאובייקט המחלקה
 
-def count_full_tanks(state):
-  # סופרת את מספר המבחנות המלאות במצב נתון
-  pass
-def get_tank_size(state):
-    # סופרת כמה צבעים לכל היותר יש במבחנה
-    pass
+    initial_state = game_variables.initial_state
+    num_colors = game_variables.num_colors
+    empty_tanks = game_variables.empty_tanks
+    full_tanks = game_variables.full_tanks
+    size = game_variables.size
 
-def get_number_of_unique_colors(initial_state):
-  """
-  מחשבת את מספר הצבעים השונים במצב התחלתי.
+game_variables = GameVariables(initial_state, num_colors, empty_tanks, full_tanks, size)
 
-  Args:
-    initial_state: מערך דו מימדי המייצג את מצב ההתחלה של המשחק.
+global initial_state, num_colors, empty_tanks, full_tanks,  size 
 
-  Returns:
-    מספר הצבעים השונים.
-  """
+def initialize_game(init, colors, empty, full,  size ):
 
-  unique_colors = set()
 
-  for tank in initial_state:
-    for color in tank:
-      unique_colors.add(color)
+    # הגדרת מצב התחלתי
+  empty_tanks = empty
+  full_tanks = full
+  tank_size = size
+  num_colors = colors
 
-  return len(unique_colors)   
+  initial_state = init
+
+  
 # הפעלת פונקציית האתחול
 initialize_game()
+"""
+"""
+empty_tanks = 2
+full_tanks = 8
+size = 8
+num_colors = 8
+
+initial_state = [[1,3,5,4,4,7,6,1],[2,2,0,0,4,3,6,7],
+        [2,1,1,4,5,6,0,2],[0,6,6,5,4,7,7,3],
+        [3,4,1,0,5,7,4,4],[7,6,2,2,3,1,0,0],
+        [7,3,3,1,2,5,5,6],[7,6,5,5,3,2,1,0],[],[]]
+
+"""
+
 
