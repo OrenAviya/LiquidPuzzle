@@ -70,9 +70,52 @@ def astar(start_state, goal_state, heuristic, successors):
 
 
 #  heuristic function ( distance)
+
+# def distance(current_state, goal_state):
+#     """
+#     Calculates the total Manhattan distance between each fluid unit in the current state and its corresponding 
+#     position in the goal state.
+
+#     Args:
+#         current_state: The current game state.
+#         goal_state: The goal state.
+
+#     Returns:
+#         The heuristic value.
+#     """
+#     total_distance = 0
+    
+#     for i in range(len(current_state)):
+#         for j in range(len(current_state[i])):
+#             fluid_unit = current_state[i][j]
+#             if fluid_unit:
+#                 # Find the position of the fluid unit in the goal state
+#                 goal_position = find_fluid_unit_position(goal_state, fluid_unit)
+#                 # Calculate Manhattan distance
+#                 distance = abs(i - goal_position[0]) + abs(j - goal_position[1])
+#                 total_distance += distance
+    
+#     return total_distance
+
+# def find_fluid_unit_position(state, fluid_unit):
+#     """
+#     Finds the position of a fluid unit in the given state.
+
+#     Args:
+#         state: The game state.
+#         fluid_unit: The fluid unit to find.
+
+#     Returns:
+#         The position of the fluid unit as a tuple (row, column).
+#     """
+#     for i in range(len(state)):
+#         for j in range(len(state[i])):
+#             if state[i][j] == fluid_unit:
+#                 return (i, j)
+            
 def distance(current_state):
     """
-    מחשבת את המרחק של כל יחידת נוזל מראש הערימה 
+    מחשבת את המרחק של כל יחידת נוזל מראש הערימה
     וסכום המרחק המצטבר של יחידות נוזל מאותו צבע.
 
     Args:
@@ -80,7 +123,8 @@ def distance(current_state):
 
     Returns:
         הערך של הוריסטיקה.
-    """
+   """
+     
 
     total_heuristic = 0
     color_unit_distances = {}
@@ -108,7 +152,6 @@ def distance(current_state):
 
     return total_heuristic
 
- 
 
 # Example successors function (4-connected grid)
 def successors(current_state):
@@ -286,7 +329,8 @@ goal_state = [
             [7, 7, 7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8, 8, 8], [], []
         ]  
 
-path = astar(start_state, goal_state, distance, successors)
+#path = astar(start_state, goal_state, distance, successors)
+path = astar(start_state, goal_state, lambda state: distance(state, goal_state), successors)
 
 if path:
     print("Path:", path)
