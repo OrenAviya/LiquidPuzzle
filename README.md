@@ -23,6 +23,10 @@ Our first huristic is:
 בנוסף נעביר בעדיפות ראשונה צבע למבחנה שאינה ריקה. 
 בנוסף נעביר בעדיפות עליונה צבע שתחתיו יש כמה שלבים שהם באותו צבע שנוכל להעביר את כולם הלאה למבחנה אחרת.
 
+הגדרנו שמרחק הוא: 
+המרחק המצטבר של הצבע לראש המחסנית למשל אם צבע מסויים נמצא בארבא מחסניות שונות מפוזר בשלבים 1 , 2 , 3 , 4 אזי הציון "מרחק שלו" הוא 10. 
+אם יש בלוק של צבע זהה בשני שלבים באותה מחסנית אחד אחרי השני אזי נחשיב רק את השלב הקרוב ביותר לראש המחסנית .
+
 ("other top" heuristic function, combined with "manhattan distance".
 It is based on the simple idea of calculating the number of containers whose upper stage, (or more) is painted with the color of the liquid that is in the second stage in the test tube from which you want to transfer liquid.
 We will find the possible steps right now.
