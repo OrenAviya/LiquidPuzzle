@@ -4,7 +4,7 @@ import heapq
 global initial_state, num_colors, empty_tanks, full_tanks,  size
 
 class GameVariables:
-    def _init_(self):
+    def __init__(self):
         self.empty_tanks = 2
         self.full_tanks = 8
         self.size = 8
@@ -18,7 +18,7 @@ class GameVariables:
 
 class Node:
     
-    def _init_(self, state, parent=None, g=0, h=0):
+    def __init__(self, state, parent=None, g=0, h=0):
         self.state = state  # Current state of the node
         self.parent = parent  # Parent node
         self.g = g  # Cost from start node to current node
@@ -27,11 +27,20 @@ class Node:
     def f(self):
         return self.g + self.h  # Total estimated cost of the cheapest path from start to goal through current node
 
+def list_to_tuple(lst):
+    """
+    Recursively converts a list to a tuple.
+    """
+    if isinstance(lst, list):
+        return tuple(list_to_tuple(item) for item in lst)
+    else:
+        return lst
+
 def astar(start_state, goal_state, heuristic, successors):
     open_list = []  # Priority queue of nodes to be evaluated
     closed_set = set()  # Set of evaluated nodes
     
-    start_node = Node(start_state, None, 0, heuristic(start_state, goal_state))
+    start_node = Node(start_state, None, 0, heuristic(start_state))
     heapq.heappush(open_list, (start_node.f(), id(start_node), start_node))
     
     while open_list:
@@ -44,10 +53,11 @@ def astar(start_state, goal_state, heuristic, successors):
                 current_node = current_node.parent
             return path[::-1]  # Return reversed path
             
-        closed_set.add(current_node.state)
+        state_tuple = list_to_tuple(current_node.state)  # Convert list to tuple recursively
+        closed_set.add(state_tuple)  # Add tuple to closed_set
         
         for successor_state, cost in successors(current_node.state):
-            if successor_state in closed_set:
+            if list_to_tuple(successor_state) in closed_set:  # Convert list to tuple for comparison
                 continue
             
             g = current_node.g + cost
@@ -57,6 +67,7 @@ def astar(start_state, goal_state, heuristic, successors):
             heapq.heappush(open_list, (successor_node.f(), id(successor_node), successor_node))
     
     return None  # No path found
+
 
 #  heuristic function ( distance)
 def distance(current_state):
@@ -68,49 +79,35 @@ def distance(current_state):
         current_state: מצב המשחק הנוכחי (רשימה של רשימות, כאשר כל רשימה פנימית מייצגת מכל).
 
     Returns:
-        שתי מילונים:
-            * color_distances: מילון הממפה כל צבע למרחק המצטבר של יחידות הנוזל שלו.
-            * color_unit_distances: מילון הממפה כל צבע לסכום המרחקים של יחידות הנוזל שלו.
+        הערך של הוריסטיקה.
     """
 
-    color_distances = {}
+    total_heuristic = 0
     color_unit_distances = {}
     unit_positions = {}
     unique_ids = 0
 
     # עוברים על כל המכלים
     for tank_index, tank in enumerate(current_state):
-        # מזהים את צבע הנוזל העליון
-        top_color = tank[0]
+        # Check if tank is not empty before accessing its elements
+        if tank:  # מזהים את צבע הנוזל העליון
+            top_color = tank[0]
 
-        # עוברים על כל יחידת נוזל במכל
-        for color, quantity in enumerate(tank[1:]):
-            # מקצים מזהה ייחודי
-            unit_id = unique_ids
-            unique_ids += 1
+            # עוברים על כל יחידת נוזל במכל
+            for color, quantity in enumerate(tank[1:]):
+                # מקצים מזהה ייחודי
+                unit_id = unique_ids
+                unique_ids += 1
 
-            # בודקים אם צבע הנוזל קיים במילונים
-            if color in color_distances:
-                color_distances[color] += unit_id
-            else:
-                color_distances[color] = unit_id
-
-            if color in color_unit_distances:
-                color_unit_distances[color].append(unit_id)
-            else:
-                color_unit_distances[color] = [unit_id]
-
-            # מעדכנים את מיקום יחידת הנוזל
-            unit_positions[unit_id] = tank_index
+                # מעדכנים את מיקום יחידת הנוזל
+                unit_positions[unit_id] = tank_index
 
     # מחשבים סכום מרחקים לכל צבע
-    for color, positions in color_unit_distances.items():
-        total_distance = 0
-        for position in positions:
-            total_distance += unit_positions[position]
-        color_unit_distances[color] = total_distance
+    for positions in unit_positions.values():
+        total_heuristic += positions
 
-    return color_distances #, color_unit_distances
+    return total_heuristic
+
  
 
 # Example successors function (4-connected grid)
@@ -138,13 +135,49 @@ def successors(current_state):
             color = current_state[from_tank][0]
 
           # הוספת הצעד לרשימה
-          successors.append((from_tank, to_tank, color), 1)
+          successors.append(((from_tank, to_tank, color), 1))
 
   return successors
 
 
 def can_move_liquid(current_state, from_tank, to_tank):
-  """
+    """
+    Checks if liquid can be moved from the "from_tank" to the "to_tank".
+
+    Args:
+        current_state: The current game state.
+        from_tank: The index of the tank from which liquid is being moved.
+        to_tank: The index of the tank to which liquid is being moved.
+
+    Returns:
+        True if liquid can be moved, False otherwise.
+    """
+    # Check if "from_tank" is a valid index for "current_state"
+    if from_tank >= len(current_state) or from_tank < 0:
+        return False
+
+    # Check if "current_state[from_tank]" is not empty
+    if not current_state[from_tank]:
+        return False
+
+    # Check if "to_tank" is a valid index for "current_state"
+    if to_tank >= len(current_state) or to_tank < 0:
+        return False
+
+    # Check if "to_tank" is not full
+    if is_full(current_state, to_tank):
+        return False
+
+    # Check if the top color of the "from_tank" matches the top color of the "to_tank"
+    from_top_color = current_state[from_tank][0]
+    to_top_color = current_state[to_tank][0] if current_state[to_tank] else None
+
+    if from_top_color == to_top_color:
+        return True
+
+    return False
+    
+    """
   בודקת אם ניתן להעביר נוזל מהמכל "from_tank" למכל "to_tank".
 
   Args:
@@ -154,7 +187,6 @@ def can_move_liquid(current_state, from_tank, to_tank):
 
   Returns:
     True אם ניתן להעביר נוזל, False אחרת.
-  """
 
   # בדיקת אם המכל היעד ריק
   if is_empty(current_state, to_tank):
@@ -178,6 +210,9 @@ def can_move_liquid(current_state, from_tank, to_tank):
 
   return False
 
+    """
+
+
 def is_full(current_state, tank):
   """
   בודקת אם המכל "tank" מלא.
@@ -189,8 +224,8 @@ def is_full(current_state, tank):
   Returns:
     True אם המכל מלא, False אחרת.
   """
-
-  max_size = size
+  game_vars= GameVariables()
+  max_size = game_vars.size
   return len(current_state[tank]) >= max_size
 
 
@@ -208,36 +243,35 @@ def is_empty(current_state, tank):
 
   return len(current_state[tank]) == 0
 
-
 def if_exist_next_top(current_state, from_tank, to_tank):
     """
-    בודקת אם קיימת מחסנית במצב הנוכחי שהצבע העליון שלה זהה לצבע השני במחסנית "from_tank".
+    Check if there exists a stack in the current state whose top color matches the second color in stack "from_tank".
 
     Args:
-        current_state: מצב המשחק הנוכחי.
-        from_tank: מספר המחסנית שממנה רוצים להעביר נוזל (לא רלוונטי).
-        to_tank: מספר המחסנית שאליה רוצים להעביר נוזל (לא רלוונטי).
+        current_state: The current game state.
+        from_tank: The stack from which fluid is being moved (not relevant).
+        to_tank: The stack to which fluid is being moved (not relevant).
 
     Returns:
-        True אם קיימת מחסנית כזו, False אחרת.
+        True if such a stack exists, False otherwise.
     """
-
     for tank_index in range(len(current_state)):
-        # דילוג על המחסנית "from_tank"
+        # Skip the "from_tank" stack
         if tank_index == from_tank:
             continue
 
-        # בדיקת צבע הנוזל העליון במחסנית הנוכחית
-        top_color = current_state[tank_index][0]
+        # Check if the tank index is within bounds
+        if tank_index < len(current_state):
+            # Check if the tank has at least one element
+            if current_state[tank_index]:
+                top_color = current_state[tank_index][0]  # Access the first element
+                second_color = current_state[from_tank][1]  # Second color in the "from_tank" stack
 
-        # בדיקת צבע הנוזל השני במחסנית "from_tank"
-        second_color = current_state[from_tank][1]
+                # If the top color matches the second color, return True
+                if top_color == second_color:
+                    return True
 
-        # אם צבע הנוזל העליון זהה לצבע השני, קיימת מחסנית מתאימה
-        if top_color == second_color:
-            return True
-
-    # לא נמצאה מחסנית מתאימה
+    # No matching stack found
     return False
 
 
