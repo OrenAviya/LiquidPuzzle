@@ -14,27 +14,16 @@ Coding the "liquid puzzle" game in an artificial intelligence course - planning 
 זהה הם מצבים שקולים.
 
 Our first huristic is: 
-\
-פונקציית יוריסטיקה "עליונים אחרים", בשילוב עם "מרחק מראש המחסנית".
-נמצא את הצעדים האפשריים כרגע.)
-בכל מהלך המשחק: אם יש צעד פשוט ממבחנה לא ריקה למבחנה לא ריקה אחרת נעשה אותו. רק אם יש מקום לכל רצף הצבע. 
-כלומר נעביר בעדיפות ראשונה צבע למבחנה שאינה ריקה. 
-כאשר נתקענו - ע"מ להעביר למבחנה ריקה נפעל לפי היוריסטיקה הבאה:
-נחשב עבור כל צעד- את המרחק שלו מהפתרון. (המרחק הגדרנו למטה)
-הצעד שיזכה לציון הנמוך ביותר- כלומר הקרוב ביותר, אותו נבחר. בהינתן שחייבת להתקיים מבחנה ששלבה העליון, (או יותר) צבוע בצבע של הנוזל שנמצא בשלב השני במבחנה שממנה רוצים להעביר נוזל.
-אם יש תיקו נבחר את הצבע שיש ממנו יותר בשלבים העליונים של המבחנות.
 
-בנוסף נעביר בעדיפות עליונה צבע שתחתיו יש כמה שלבים שהם באותו צבע שנוכל להעביר את כולם הלאה למבחנה אחרת.
+פונקצית היוריסטיקה מחשבת את המרחק בין מצב נוכחי למצב מטרה בפאזל העברת נוזלים. המרחק הוא אומדן של מספר המהלכים המינימלי הנדרש כדי להגיע מהמצב הנוכחי למצב המטרה. (בדומה למרחק מנהטן שלמדנו בשיעור)
 
-הגדרנו שמרחק הוא: 
-המרחק המצטבר של הצבע לראש המחסנית למשל אם צבע מסויים נמצא בארבא מחסניות שונות מפוזר בשלבים 1 , 2 , 3 , 4 אזי הציון "מרחק שלו" הוא 10. 
-אם יש בלוק של צבע זהה בשני שלבים באותה מחסנית אחד אחרי השני אזי נחשיב רק את השלב הקרוב ביותר לראש המחסנית .
+הפונקציה פועלת על ידי איטרציה על המיכלים במצב הנוכחי ולכל נוזל במיכל, היא מוצאת את הנוזל המתאים במצב המטרה. המרחק בין המיקום הנוכחי של הנוזל למיקום המטרה שלו מתווסף לאחר מכן למרחק הכולל. הפונקציה גם מענישה את המרחק אם הנוזל הנוכחי אינו על גבי אותו נוזל במיכל.
 
-("other top" heuristic function, combined with "manhattan distance".
-It is based on the simple idea of calculating the number of containers whose upper stage, (or more) is painted with the color of the liquid that is in the second stage in the test tube from which you want to transfer liquid.
-We will find the possible steps right now.
-Calculated for each step - its distance points from the solution. (by distance from Manhattan)
-The step that will get the lowest score - that is, the closest one, will be chosen.
-In addition, we will first transfer color to a test tube that is not empty.
-In addition, we will transfer as a top priority a color under which there are several stages that are the same color so that we can transfer them all on to another test tube.)
+
+The enhanced_heuristic function calculates the distance between a current state and a goal state in a fluid transfer puzzle. The distance is an estimate of the number of moves to reach the current condition conditions. (Similar to the Manhattan distance we studied in class)
+
+The function iterates over the containers in the current state and for each liquid in the container, it finds the appropriate liquid for the need. The distance between the fluid's current position and its point is added after reaching the distance. The function also penalizes the distance if the current liquid is not on top of the same liquid in the tank.
+
+בפתרון שלנו נשתמש באלגוריתם A* יחד עם פונקציית היוריסטיקה הזו. 
+
 
