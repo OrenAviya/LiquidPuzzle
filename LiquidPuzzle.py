@@ -4,15 +4,16 @@ import time
 class GameVariables:
     def __init__(self):
         self.empty_tanks = 2
-        self.full_tanks = 8
-        self.size = 8
-        self.num_colors = 8
-        self.initial_state = [
-            [1, 3, 5, 4, 4, 7, 6, 1], [2, 2, 0, 0, 4, 3, 6, 7],
-            [2, 1, 1, 4, 5, 6, 0, 2], [0, 6, 6, 5, 4, 7, 7, 3],
-            [3, 4, 1, 0, 5, 7, 4, 4], [7, 6, 2, 2, 3, 1, 0, 0],
-            [7, 3, 3, 1, 2, 5, 5, 6], [7, 6, 5, 5, 3, 2, 1, 0], [], []
-        ]
+        self.full_tanks = 5
+        self.size = 4
+        self.num_colors = 5
+        self.initial_state =[[0,1,2,3],[2,4,1,2],[4,0,1,4],[2,3,1,3],[4,0,0,3],[],[]]
+        # self.initial_state = [
+        #     [1, 3, 5, 4, 4, 7, 6, 1], [2, 2, 0, 0, 4, 3, 6, 7],
+        #     [2, 1, 1, 4, 5, 6, 0, 2], [0, 6, 6, 5, 4, 7, 7, 3],
+        #     [3, 4, 1, 0, 5, 7, 4, 4], [7, 6, 2, 2, 3, 1, 0, 0],
+        #     [7, 3, 3, 1, 2, 5, 5, 6], [7, 6, 5, 5, 3, 2, 1, 0], [], []
+        # ]
 
 class Node:
     def __init__(self, state, parent=None, g=0, h=0):
@@ -69,7 +70,7 @@ def astar(start_state, goal_state, heuristic, successors):
     
     return None
 
-def distance(current_state, goal_state):
+def improved_heuristic(current_state, goal_state):
     total_distance = 0
     
     for i, tank in enumerate(current_state):
@@ -78,6 +79,10 @@ def distance(current_state, goal_state):
                 try:
                     goal_position = next((gi, gj) for gi, goal_tank in enumerate(goal_state) for gj, goal_fluid in enumerate(goal_tank) if goal_fluid == fluid)
                     total_distance += abs(i - goal_position[0]) + abs(j - goal_position[1])
+                    
+                    # Penalize if the current fluid is not on top of the same fluid
+                    if j > 0 and tank[j - 1] != fluid:
+                        total_distance += 2
                 except StopIteration:
                     pass
     
@@ -125,15 +130,16 @@ def is_empty(current_state, tank):
 # Example usage
 game_vars = GameVariables()
 start_state = game_vars.initial_state
-goal_state = [
-    [1, 1, 1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2, 2, 2],
-    [3, 3, 3, 3, 3, 3, 3, 3], [4, 4, 4, 4, 4, 4, 4, 4],
-    [5, 5, 5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6, 6, 6],
-    [7, 7, 7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8, 8, 8], [], []
-]
+goal_state = [[0,0,0,0],[1,1,1,1],[2,2,2,2],[3,3,3,3],[4,4,4,4],[],[]]
+# goal_state = [
+#     [1, 1, 1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2, 2, 2],
+#     [3, 3, 3, 3, 3, 3, 3, 3], [4, 4, 4, 4, 4, 4, 4, 4],
+#     [5, 5, 5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6, 6, 6],
+#     [7, 7, 7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8, 8, 8], [], []
+# ]
 
 start_time = time.time()
-path = astar(start_state, goal_state, distance, successors)
+path = astar(start_state, goal_state, improved_heuristic, successors)
 end_time = time.time()
 
 if path:
