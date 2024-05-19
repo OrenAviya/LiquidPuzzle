@@ -91,7 +91,6 @@ def improved_heuristic(current_state, goal_state):
 
 def successors(current_state):
     successors = []
-
     for from_tank in range(len(current_state)):
         for to_tank in range(len(current_state)):
             if from_tank != to_tank:
@@ -148,4 +147,4 @@ if path:
         print(state)
 else:
     print("No path found.")
-# print(f"Elapsed time: {end_time - start_time:.2f} seconds")
+print(f"Elapsed time: {end_time - start_time:.2f} seconds")
