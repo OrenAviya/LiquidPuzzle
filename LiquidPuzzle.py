@@ -4,9 +4,9 @@ import time
 class GameVariables:
     def __init__(self):
         self.empty_tanks = 2
-        self.full_tanks = 5
-        self.size = 4
-        self.num_colors = 5
+        self.full_tanks = 8
+        self.size = 8
+        self.num_colors = 8
         # self.initial_state =[[0,1,2,3],[2,4,1,2],[4,0,1,4],[2,3,1,3],[4,0,0,3],[],[]]
         self.initial_state = [
             [1, 3, 5, 4, 4, 7, 6, 1], [2, 2, 0, 0, 4, 3, 6, 7],
@@ -135,7 +135,7 @@ goal_state = [
     [1, 1, 1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2, 2, 2],
     [3, 3, 3, 3, 3, 3, 3, 3], [4, 4, 4, 4, 4, 4, 4, 4],
     [5, 5, 5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6, 6, 6],
-    [7, 7, 7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8, 8, 8], [], []
+    [7, 7, 7, 7, 7, 7, 7, 7], [0, 0, 0, 0, 0, 0, 0, 0], [], []
 ]
 
 start_time = time.time()
