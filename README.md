@@ -23,3 +23,7 @@ Our first huristic is:
 The enhanced_heuristic function calculates the distance between a current state and a goal state in a fluid transfer puzzle. The distance is an estimate of the number of moves to reach the current condition conditions. (Similar to the Manhattan distance we studied in class)
 
 The function iterates over the containers in the current state and for each liquid in the container, it finds the appropriate liquid for the need. The distance between the fluid's current position and its point is added after reaching the distance. The function also penalizes the distance if the current liquid is not on top of the same liquid in the tank.
+
+בפתרון שלנו נשתמש באלגוריתם A* יחד עם פונקציית היוריסטיקה הזו. 
+
+
