@@ -7,7 +7,6 @@ class GameVariables:
         self.full_tanks = 8
         self.size = 8
         self.num_colors = 8
-        # self.initial_state =[[0,1,2,3],[2,4,1,2],[4,0,1,4],[2,3,1,3],[4,0,0,3],[],[]]
         self.initial_state = [
             [1, 3, 5, 4, 4, 7, 6, 1], [2, 2, 0, 0, 4, 3, 6, 7],
             [2, 1, 1, 4, 5, 6, 0, 2], [0, 6, 6, 5, 4, 7, 7, 3],
@@ -52,7 +51,9 @@ def astar(start_state, goal_state, heuristic, successors):
             while current_node:
                 path.append(current_node.state)
                 current_node = current_node.parent
-            return path[::-1]
+            path = path[::-1]
+            print(f"Number of steps in the solution path: {len(path) - 1}")
+            return path
         
         state_tuple = list_to_tuple(current_node.state)
         closed_set.add(state_tuple)
@@ -130,7 +131,6 @@ def is_empty(current_state, tank):
 # Example usage
 game_vars = GameVariables()
 start_state = game_vars.initial_state
-# goal_state = [[0,0,0,0],[1,1,1,1],[2,2,2,2],[3,3,3,3],[4,4,4,4],[],[]]
 goal_state = [
     [1, 1, 1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2, 2, 2],
     [3, 3, 3, 3, 3, 3, 3, 3], [4, 4, 4, 4, 4, 4, 4, 4],
@@ -148,4 +148,4 @@ if path:
         print(state)
 else:
     print("No path found.")
-print(f"Elapsed time: {end_time - start_time:.2f} seconds")
+# print(f"Elapsed time: {end_time - start_time:.2f} seconds")
