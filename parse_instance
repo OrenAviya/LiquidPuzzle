@@ -1,0 +1,77 @@
+import re
+
+class GameVariables:
+    def __init__(self, empty, full, size, colors, initial_state):
+        self.empty_tanks = empty
+        self.full_tanks = full
+        self.size = size
+        self.num_colors = colors
+        self.initial_state = initial_state
+
+def read_instances(filename):
+    with open(filename, 'r') as file:
+        content = file.read()
+
+    # Split the content based on the instance delimiter
+    instances = re.split(r'#+\d+#+', content)
+    parsed_instances = []
+    for instance in instances:
+        instance = instance.strip()
+        if instance:
+            print(f"Parsing instance:\n{instance}\n")
+            try:
+                empty_match = re.search(r'empty\s*=\s*(\d+)', instance)
+                full_match = re.search(r'full\s*=\s*(\d+)', instance)
+                size_match = re.search(r'size\s*=\s*(\d+)', instance)
+                colors_match = re.search(r'colors\s*=\s*(\d+)', instance)
+                init_match = re.search(r'init\s*=\s*(\[.*\])', instance, re.DOTALL)
+                
+                if empty_match and full_match and size_match and colors_match and init_match:
+                    empty = int(empty_match.group(1))
+                    full = int(full_match.group(1))
+                    size = int(size_match.group(1))
+                    colors = int(colors_match.group(1))
+                    init = eval(init_match.group(1))
+                    parsed_instances.append(GameVariables(empty, full, size, colors, init))
+                else:
+                    print(f"Missing one of the required fields in instance: {instance}")
+            except Exception as e:
+                print(f"Failed to parse instance: {e}")
+    
+    print(f"Total instances parsed: {len(parsed_instances)}")
+    return parsed_instances
+
+def create_goal_state(game_vars):
+    goal_state = []
+    for color in range(1, game_vars.num_colors + 1):
+        goal_state.append(tuple([color] * game_vars.size))
+    for _ in range(game_vars.empty_tanks):
+        goal_state.append(tuple())
+    return tuple(goal_state)
+
+def main(filename, instance_index):
+    instances = read_instances(filename)
+    if instance_index < 0 or instance_index >= len(instances):
+        print(f"Invalid instance index: {instance_index}. Please provide a valid index between 0 and {len(instances) - 1}.")
+        return
+    
+    game_vars = instances[instance_index]
+    start_state = tuple(map(tuple, game_vars.initial_state))
+    goal_state = create_goal_state(game_vars)
+    print ("goal state: " , goal_state) 
+    # start_time = time.time()
+    # path = bidirectional_astar(start_state, goal_state, improved_heuristic, successors)
+    # end_time = time.time()
+
+    # if path:
+    #     print("Path found!")
+    #     for state in path:
+    #         print(state)
+    # else:
+    #     print("No path found.")
+    # print(f"Elapsed time: {end_time - start_time:.2f} seconds")
+
+# Example usage
+filename = 'instances'  # Replace with your file name
+instance_index = 0  # Index of the instance you want to solve
+main(filename, instance_index)

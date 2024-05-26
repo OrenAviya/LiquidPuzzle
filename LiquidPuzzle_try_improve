@@ -1,0 +1,184 @@
+import heapq
+import time
+
+class GameVariables:
+    def __init__(self):
+        self.empty_tanks = 5
+        self.full_tanks = 10
+        self.size = 10
+        self.num_colors = 10
+        self.initial_state = [[], [], [], [], [], [4, 4, 6, 1, 9, 5, 3, 3, 8, 7], [2, 9, 8, 7, 3, 2, 1, 4, 0, 0], 
+                              [7, 8, 8, 7, 8, 4, 8, 4, 2, 5], [3, 8, 6, 0, 6, 3, 5, 2, 6, 9], [2, 2, 3, 3, 3, 6, 9, 5, 7, 0], 
+                              [0, 5, 0, 4, 0, 7, 9, 1, 7, 1], [2, 7, 1, 2, 6, 4, 5, 6, 4, 8], [6, 7, 8, 2, 9, 1, 9, 0, 4, 3],
+                                [0, 2, 9, 7, 1, 8, 6, 5, 9, 5], [0, 5, 5, 6, 3, 4, 1, 1, 1, 9]]
+
+
+class Node:
+    def __init__(self, state, parent=None, g=0, h=0):
+        self.state = tuple(map(tuple, state))
+        self.parent = parent
+        self.g = g
+        self.h = h
+
+    def f(self):
+        return self.g + self.h
+
+def bidirectional_astar(start_state, goal_state, heuristic, successors):
+    open_list_start = []
+    open_list_goal = []
+    closed_set_start = {}
+    closed_set_goal = {}
+    
+    start_node = Node(start_state, None, 0, heuristic(start_state, goal_state))
+    goal_node = Node(goal_state, None, 0, heuristic(goal_state, start_state))
+    
+    # Convert states to tuples before storing in closed sets
+    start_state_tuple = tuple(map(tuple, start_state))
+    goal_state_tuple = tuple(map(tuple, goal_state))
+    closed_set_start[start_state_tuple] = start_node
+    closed_set_goal[goal_state_tuple] = goal_node
+    
+    heapq.heappush(open_list_start, (start_node.f(), id(start_node), start_node))
+    heapq.heappush(open_list_goal, (goal_node.f(), id(goal_node), goal_node))
+    
+    iteration = 0
+    while open_list_start and open_list_goal:
+        iteration += 1
+        if iteration % 1000 == 0:
+            print(f"Iteration: {iteration}, Open list size (start): {len(open_list_start)}, Open list size (goal): {len(open_list_goal)}")
+        
+        if open_list_start:
+            _, _, current_node_start = heapq.heappop(open_list_start)
+            current_state_start_tuple = tuple(map(tuple, current_node_start.state))
+            if current_state_start_tuple in closed_set_goal:
+                print("Goal reached from start side!")
+                return reconstruct_path(current_node_start, closed_set_goal[current_state_start_tuple])
+            
+            closed_set_start[current_state_start_tuple] = current_node_start
+            for successor_state, cost in successors(current_node_start.state):
+                successor_state_tuple = tuple(map(tuple, successor_state))
+                if successor_state_tuple in closed_set_start:
+                    continue
+                g = current_node_start.g + cost
+                h = heuristic(successor_state, goal_state)
+                successor_node = Node(successor_state, current_node_start, g, h)
+                heapq.heappush(open_list_start, (successor_node.f(), id(successor_node), successor_node))
+        
+        if open_list_goal:
+            _, _, current_node_goal = heapq.heappop(open_list_goal)
+            current_state_goal_tuple = tuple(map(tuple, current_node_goal.state))
+            if current_state_goal_tuple in closed_set_start:
+                print("Goal reached from goal side!")
+                return reconstruct_path(closed_set_start[current_state_goal_tuple], current_node_goal)
+            
+            closed_set_goal[current_state_goal_tuple] = current_node_goal
+            for successor_state, cost in successors(current_node_goal.state):
+                successor_state_tuple = tuple(map(tuple, successor_state))
+                if successor_state_tuple in closed_set_goal:
+                    continue
+                g = current_node_goal.g + cost
+                h = heuristic(successor_state, start_state)
+                successor_node = Node(successor_state, current_node_goal, g, h)
+                heapq.heappush(open_list_goal, (successor_node.f(), id(successor_node), successor_node))
+    
+    return None
+
+def reconstruct_path(start_node, goal_node):
+    path = []
+    current = start_node
+    while current:
+        path.append(current.state)
+        current = current.parent
+    path.reverse()
+    
+    current = goal_node.parent
+    while current:
+        path.append(current.state)
+        current = current.parent
+    
+    print(f"Number of steps in the solution path: {len(path) - 1}")
+    return path
+
+def improved_heuristic(current_state, goal_state):
+    total_distance = 0
+    color_positions = {color: [] for color in range(10)}
+
+    for i, tank in enumerate(goal_state):
+        for j, color in enumerate(tank):
+            color_positions[color].append((i, j))
+    
+    for i, tank in enumerate(current_state):
+        for j, color in enumerate(tank):
+            if color_positions[color]:
+                goal_i, goal_j = color_positions[color].pop(0)
+                total_distance += abs(i - goal_i) + abs(j - goal_j)
+                if j > 0 and tank[j - 1] != color:
+                    total_distance += 2
+
+    return total_distance
+
+def successors(current_state):
+    successors = []
+    for from_tank in range(len(current_state)):
+        for to_tank in range(len(current_state)):
+            if from_tank != to_tank:
+                if can_move_liquid(current_state, from_tank, to_tank):
+                    new_state = [list(tank) for tank in current_state]
+                    new_state[to_tank].insert(0, new_state[from_tank].pop(0))
+                    successors.append((new_state, 1))
+    return successors
+
+def can_move_liquid(current_state, from_tank, to_tank):
+    if from_tank >= len(current_state) or from_tank < 0:
+        return False
+    if not current_state[from_tank]:
+        return False
+    if to_tank >= len(current_state) or to_tank < 0:
+        return False
+    if is_full(current_state, to_tank):
+        return False
+
+    from_top_color = current_state[from_tank][0]
+    to_top_color = current_state[to_tank][0] if current_state[to_tank] else None
+
+    if from_top_color == to_top_color or is_empty(current_state, to_tank):
+        return True
+
+    return False
+
+def is_full(current_state, tank):
+    game_vars = GameVariables()
+    max_size = game_vars.size
+    return len(current_state[tank]) >=max_size
+
+def is_empty(current_state, tank):
+    return len(current_state[tank]) == 0
+
+# Example usage
+game_vars = GameVariables()   
+start_state = game_vars.initial_state
+goal_state = [
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
+    [2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+    [3, 3, 3, 3, 3, 3, 3, 3, 3, 3], 
+    [4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
+    [5, 5, 5, 5, 5, 5, 5, 5, 5, 5], 
+    [6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
+    [7, 7, 7, 7, 7, 7, 7, 7, 7, 7], 
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+    [8, 8, 8, 8, 8, 8, 8, 8, 8, 8], 
+    [9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
+    [], [], [], [], []
+]
+
+start_time = time.time()
+path = bidirectional_astar(start_state, goal_state, improved_heuristic, successors)
+end_time = time.time()
+
+if path:
+    print("Path found!")
+    for state in path:
+        print(state)
+else:
+    print("No path found.")
+print(f"Elapsed time: {end_time - start_time:.2f} seconds")
