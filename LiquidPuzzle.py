@@ -3,15 +3,12 @@ import time
 
 class GameVariables:
     def __init__(self):
-        self.empty_tanks = 5
-        self.full_tanks = 10
-        self.size = 10
-        self.num_colors = 10
-        self.initial_state =  [[], [], [], [], [], [4, 4, 6, 1, 9, 5, 3, 3, 8, 7], 
-                               [2, 9, 8, 7, 3, 2, 1, 4, 0, 0], [7, 8, 8, 7, 8, 4, 8, 4, 2, 5],
-                             [3, 8, 6, 0, 6, 3, 5, 2, 6, 9], [2, 2, 3, 3, 3, 6, 9, 5, 7, 0], [0, 5, 0, 4, 0, 7, 9, 1, 7, 1],
-                             [2, 7, 1, 2, 6, 4, 5, 6, 4, 8], [6, 7, 8, 2, 9, 1, 9, 0, 4, 3], [0, 2, 9, 7, 1, 8, 6, 5, 9, 5], 
-                            [0, 5, 5, 6, 3, 4, 1, 1, 1, 9]]
+        self.empty_tanks = 2
+        self.full_tanks = 8
+        self.size = 8
+        self.num_colors = 8
+        self.initial_state = [[], [], [6, 5, 7, 6, 0, 2, 1, 0], [5, 0, 2, 2, 2, 3, 3, 1], [4, 6, 1, 7, 1, 6, 6, 4], [0, 4, 4, 7, 3, 6, 2, 5], [1, 1, 5, 0, 5, 4, 7, 1], 
+                              [6, 3, 3, 3, 7, 3, 7, 5], [4, 1, 7, 5, 0, 4, 4, 0], [7, 5, 3, 0, 2, 2, 2, 6]]
 class Node:
     def __init__(self, state, parent=None, g=0, h=0):
         self.state = state
@@ -90,14 +87,22 @@ def improved_heuristic(current_state, goal_state):
 def successors(current_state):
     successors = []
     for from_tank in range(len(current_state)):
+        if not current_state[from_tank]:  # Skip empty tanks
+            continue
         for to_tank in range(len(current_state)):
             if from_tank != to_tank:
                 if can_move_liquid(current_state, from_tank, to_tank):
                     new_state = [list(tank) for tank in current_state]
-                    new_state[to_tank].insert(0, new_state[from_tank].pop(0))
+                    new_state[to_tank].append(new_state[from_tank].pop())  # Use rightmost element
                     successors.append((new_state, 1))
-
+                elif is_empty(current_state, to_tank):  # If the to_tank is empty, prioritize transferring
+                    color_to_transfer = current_state[from_tank][-1]  # Get the color most at the top
+                    new_state = [list(tank) for tank in current_state]
+                    new_state[to_tank].append(new_state[from_tank].pop())  # Use rightmost element
+                    successors.append((new_state, 1))
+                    break  # Break after finding the first empty tank
     return successors
+
 
 def can_move_liquid(current_state, from_tank, to_tank):
     if from_tank >= len(current_state) or from_tank < 0:
@@ -109,8 +114,8 @@ def can_move_liquid(current_state, from_tank, to_tank):
     if is_full(current_state, to_tank):
         return False
 
-    from_top_color = current_state[from_tank][0]
-    to_top_color = current_state[to_tank][0] if current_state[to_tank] else None
+    from_top_color = current_state[from_tank][-1]
+    to_top_color = current_state[to_tank][-1] if current_state[to_tank] else None
 
     if from_top_color == to_top_color or is_empty(current_state, to_tank):
         return True
@@ -133,9 +138,9 @@ goal_state = [
     [3, 3, 3, 3, 3, 3, 3, 3,3,3], [4, 4, 4, 4, 4, 4, 4, 4,4,4],
     [5, 5, 5, 5, 5, 5, 5, 5,5,5], [6, 6, 6, 6, 6, 6, 6, 6,6,6],
     [7, 7, 7, 7, 7, 7, 7, 7,7,7], [0, 0, 0, 0, 0, 0, 0, 0, 0,0], 
-    [8, 8, 8, 8, 8, 8, 8, 8, 8, 8],  [9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
-     [],[], [],[],[]
-]
+    [],[]]
+# [8, 8, 8, 8, 8, 8, 8, 8, 8, 8],  [9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
+    #  [],[], []
 
 start_time = time.time()
 path = astar(start_state, goal_state, improved_heuristic, successors)
