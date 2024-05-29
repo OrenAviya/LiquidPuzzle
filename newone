@@ -50,52 +50,49 @@ def list_to_tuple(lst):
 
 def successors(current_state, max_colors_per_tube):
     """
-    Generates valid successor states based on the game rules.
-
-    Args:
-        current_state: The current state of the game (list of lists representing tubes).
-        max_colors_per_tube: The maximum number of colors allowed in a single tube.
-
-    Returns:
-        A list of tuples, each containing a valid successor state and the cost (1) of the move.
+    Generates valid successor states, transferring contiguous colors in one move.
     """
     successors = []
 
     for from_tube in range(len(current_state)):
-        # Skip empty source tubes
-        if not current_state[from_tube]: 
+        if not current_state[from_tube]:  # Skip empty source tubes
             continue
 
-        top_color = current_state[from_tube][-1]  # Get the top color from the source tube
+        top_color = current_state[from_tube][-1]
+        transfer_count = 1  # Start with transferring one color
+
+        # Check for contiguous colors
+        while transfer_count < len(current_state[from_tube]) and current_state[from_tube][-1 - transfer_count] == top_color:
+            transfer_count += 1
 
         for to_tube in range(len(current_state)):
             if from_tube != to_tube:
-                # Check if the move is legal according to the rules
                 is_to_tube_empty = not current_state[to_tube]
                 is_same_color = current_state[to_tube] and current_state[to_tube][-1] == top_color
-                is_to_tube_not_full = len(current_state[to_tube]) < max_colors_per_tube
+                is_to_tube_not_full = len(current_state[to_tube]) + transfer_count <= max_colors_per_tube
                 is_to_tube_valid = is_to_tube_empty or (is_same_color and is_to_tube_not_full)
 
                 if is_to_tube_valid:
-                    new_state = [tube[:] for tube in current_state]  # Create a copy of the state
-                    new_state[to_tube].append(new_state[from_tube].pop())  # Move the color
-                    successors.append((new_state, 1))  # Add the new state and cost (1)
+                    new_state = [tube[:] for tube in current_state]
+                    for _ in range(transfer_count):  # Transfer the entire contiguous block
+                        new_state[to_tube].append(new_state[from_tube].pop())
+                    successors.append((new_state, 1))  # Cost remains 1 per move, regardless of colors transferred
 
     return successors
 
-def improved_heuristic(current_state, goal_state, empty_tube_weight=10, color_consolidation_weight=5,
-                       abundant_color_weight=2, top_color_weight=1, bottom_color_weight=1):
+def improved_heuristic(current_state, goal_state, weights):
     """
-    Heuristic function for the tube sorting puzzle, prioritizing colors with fewer empty tubes to target.
+    Heuristic function for the tube sorting puzzle, prioritizing colors with fewer empty tubes to target,
+    and giving a bonus for longer sequences of the same color.
     """
     total_distance = 0
     color_counts = {}
-    
+
     # Determine the maximum color value in the goal_state
-    max_color = max(color for tube in goal_state for color in tube if tube) 
+    max_color = max(color for tube in goal_state for color in tube if tube)
 
     # Initialize color_positions with the appropriate range
-    color_positions = {color: [] for color in range(max_color + 1)}  
+    color_positions = {color: [] for color in range(max_color + 1)}
 
     for i, tank in enumerate(goal_state):
         for j, color in enumerate(tank):
@@ -103,43 +100,53 @@ def improved_heuristic(current_state, goal_state, empty_tube_weight=10, color_co
             color_counts[color] = color_counts.get(color, 0) + 1
 
     for i, tank in enumerate(current_state):
+        current_color = None
+        sequence_length = 0
         for j, color in enumerate(tank):
             if color_positions[color]:
                 goal_i, goal_j = color_positions[color][0]  # Use the first goal position for this color
 
                 # Calculate Manhattan distance and penalize if not in correct order
                 if j > goal_j:  # Color is too low in the current tube
-                    total_distance += 2 * abs(j - goal_j) 
+                    total_distance += 2 * abs(j - goal_j)
                 else:
                     total_distance += abs(i - goal_i) + abs(j - goal_j)
 
                 # Add bonus for top colors
-                if j == len(tank) - 1:  
-                    total_distance -= top_color_weight
+                if j == len(tank) - 1:
+                    total_distance -= weights['top_color_weight']
 
                 # Add bonus for bottom colors
                 if j == 0:
-                    total_distance -= bottom_color_weight
+                    total_distance -= weights['bottom_color_weight']
 
-            # Add bonus for consolidating colors
-            if j > 0 and tank[j - 1] == color:
-                total_distance -= color_consolidation_weight
+                # Add bonus for consolidating colors
+                if j > 0 and tank[j - 1] == color:
+                    total_distance -= weights['color_consolidation_weight']
 
-            # Add penalty for abundant colors not in their goal tube
-            if i != goal_i:
-                total_distance += color_counts[color] * abundant_color_weight
+                # Add penalty for abundant colors not in their goal tube
+                if i != goal_i:
+                    total_distance += color_counts[color] * weights['abundant_color_weight']
 
+            # Check for sequences and add bonus
+            if color == current_color:
+                sequence_length += 1
+            else:
+                current_color = color
+                sequence_length = 1
+            total_distance -= weights['sequence_bonus'] * (sequence_length - 1)  # Bonus only for sequences of length 2 or more
 
     # Prioritize colors with fewer empty tubes to target:
     for color, positions in color_positions.items():
         empty_tubes_for_color = sum(1 for tube in current_state if not tube or tube[-1] == color)
-        total_distance += (10 - empty_tubes_for_color) * abundant_color_weight  # Adjust the weight as needed
+        total_distance += (10 - empty_tubes_for_color) * weights['abundant_color_weight']  # Adjust the weight as needed
 
     # Add bonus for empty tubes
     empty_tubes = sum(1 for tank in current_state if not tank)
-    total_distance -= empty_tubes * empty_tube_weight
+    total_distance -= empty_tubes * weights['empty_tube_weight']
 
     return total_distance
+
 
 
 def astar(start_state, goal_state, heuristic, successors, max_colors_per_tube):
@@ -150,7 +157,7 @@ def astar(start_state, goal_state, heuristic, successors, max_colors_per_tube):
     closed_set = set()
     previous_states = set()
 
-    start_node = Node(start_state, None, 0, heuristic(start_state, goal_state))
+    start_node = Node(start_state, None, 0, heuristic(start_state, goal_state, weights))
     heapq.heappush(open_list, (start_node.f(), start_node))
     previous_states.add(list_to_tuple(start_state))
 
@@ -178,7 +185,7 @@ def astar(start_state, goal_state, heuristic, successors, max_colors_per_tube):
                 continue
 
             g = current_node.g + cost
-            h = heuristic(successor_state, goal_state)
+            h = heuristic(successor_state, goal_state, weights)
             successor_node = Node(successor_state, current_node, g, h)
 
             heapq.heappush(open_list, (successor_node.f(), successor_node))
@@ -247,10 +254,14 @@ game_vars = GameVariables()
 start_state = game_vars.initial_state
 goal_state =  create_goal_state (start_state , game_vars.empty_tanks )
 print ("goal_state: ", goal_state)
+# הגדרת המשקלים:
+weights = {'empty_tube_weight': 10, 'color_consolidation_weight': 5, 'abundant_color_weight': 2,
+           'top_color_weight': 1, 'bottom_color_weight': 1, 'sequence_bonus': 3}
+
 start_time = time.time()
 
-path, cost = astar(start_state, goal_state, improved_heuristic, successors, game_vars.size)  # Pass game_vars.size
-
+path, cost = astar(start_state, goal_state, improved_heuristic, successors, game_vars.size)
+end_time = time.time()
 end_time = time.time()
 
 if path:
