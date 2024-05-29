@@ -3,13 +3,29 @@ import time
 class GameVariables:
     def __init__(self):
         self.empty_tanks = 5
-        self.full_tanks = 10
-        self.size = 10
-        self.num_colors = 10
-        self.initial_state = [[], [], [], [], [], [4, 4, 6, 1, 9, 5, 3, 3, 8, 7], [2, 9, 8, 7, 3, 2, 1, 4, 0, 0],
-                               [7, 8, 8, 7, 8, 4, 8, 4, 2, 5], [3, 8, 6, 0, 6, 3, 5, 2, 6, 9], [2, 2, 3, 3, 3, 6, 9, 5, 7, 0], 
-                               [0, 5, 0, 4, 0, 7, 9, 1, 7, 1], [2, 7, 1, 2, 6, 4, 5, 6, 4, 8], [6, 7, 8, 2, 9, 1, 9, 0, 4, 3],
-                               [0, 2, 9, 7, 1, 8, 6, 5, 9, 5], [0, 5, 5, 6, 3, 4, 1, 1, 1, 9]]
+        self.full_tanks = 20
+        self.size = 20
+        self.num_colors = 20
+        self.initial_state = [[], [], [], [], [], [4, 4, 4, 2, 6, 18, 9, 3, 18, 1, 5, 0, 6, 13, 18, 9, 14, 13, 2, 3],
+                               [5, 5, 5, 5, 5, 6, 4, 17, 16, 9, 5, 5, 6, 17, 14, 12, 16, 3, 11, 0], 
+                               [14, 16, 10, 0, 6, 19, 12, 10, 1, 7, 14, 14, 2, 4, 6, 4, 3, 3, 1, 1],
+                                 [7, 7, 7, 7, 7, 7, 11, 13, 19, 2, 18, 17, 3, 2, 1, 16, 0, 1, 5, 4],
+                                   [8, 8, 8, 8, 8, 8, 8, 8, 7, 1, 11, 19, 9, 14, 9, 17, 1, 1, 1, 14],
+                                     [16, 8, 12, 15, 13, 2, 2, 8, 7, 2, 15, 19, 1, 6, 2, 2, 4, 6, 1, 12], 
+                                     [10, 10, 10, 10, 10, 10, 10, 10, 12, 3, 15, 19, 4, 1, 16, 14, 11, 16, 18, 0],
+                                       [5, 13, 10, 11, 9, 12, 5, 10, 0, 3, 8, 3, 3, 10, 3, 17, 18, 14, 17, 15], 
+                                       [12, 12, 12, 6, 19, 19, 2, 4, 4, 13, 2, 3, 10, 15, 0, 4, 17, 9, 15, 16],
+                                         [13, 13, 13, 13, 13, 13, 13, 4, 11, 19, 6, 11, 9, 16, 11, 7, 0, 0, 17, 1], 
+                                         [14, 14, 14, 14, 14, 14, 14, 7, 18, 7, 17, 19, 17, 19, 11, 13, 7, 8, 0, 19], 
+                                         [15, 15, 3, 0, 4, 8, 2, 18, 12, 11, 19, 0, 0, 7, 10, 15, 18, 17, 5, 0], 
+                                         [16, 16, 16, 14, 10, 5, 8, 2, 15, 3, 12, 18, 4, 18, 11, 6, 5, 6, 15, 17], 
+                                         [13, 1, 3, 10, 16, 8, 9, 17, 7, 8, 5, 11, 9, 9, 15, 12, 5, 7, 19, 0], 
+                                         [18, 18, 18, 17, 12, 3, 11, 6, 2, 19, 18, 1, 15, 9, 14, 12, 4, 15, 5, 7],
+                                           [17, 10, 19, 18, 2, 12, 6, 17, 19, 2, 13, 8, 9, 5, 4, 11, 12, 18, 13, 11], 
+                                           [3, 9, 16, 16, 12, 3, 6, 16, 8, 17, 11, 1, 18, 0, 0, 17, 7, 18, 19, 15], 
+                                           [10, 14, 6, 8, 12, 13, 11, 7, 3, 9, 10, 15, 15, 0, 15, 19, 12, 9, 4, 4],
+                                             [5, 16, 2, 18, 1, 17, 6, 14, 16, 16, 6, 6, 0, 16, 4, 9, 15, 17, 0, 13],
+                               [3, 19, 7, 11, 13, 15, 11, 1, 9, 2, 2, 6, 9, 11, 8, 5, 12, 19, 9, 1]]
 class Node:
     def __init__(self, state, parent=None, g=0, h=0):
         self.state = state
@@ -67,16 +83,19 @@ def successors(current_state, max_colors_per_tube):
 
     return successors
 
-
-def improved_heuristic(current_state, goal_state, empty_tube_weight=10, color_consolidation_weight=5, abundant_color_weight=2, top_color_weight=1, bottom_color_weight=1):
+def improved_heuristic(current_state, goal_state, empty_tube_weight=10, color_consolidation_weight=5,
+                       abundant_color_weight=2, top_color_weight=1, bottom_color_weight=1):
     """
-    Heuristic function for the tube sorting puzzle.
+    Heuristic function for the tube sorting puzzle, prioritizing colors with fewer empty tubes to target.
     """
     total_distance = 0
-    color_counts = {}  # Count occurrences of each color
-    max_color = max(color for tube in goal_state for color in tube)  # Find the maximum color value
-    color_positions = {color: [] for color in range(max_color + 1)}  # Adjust range 
-    # color_positions = {color: [] for color in range(10)}  # Track positions of each color in the goal state
+    color_counts = {}
+    
+    # Determine the maximum color value in the goal_state
+    max_color = max(color for tube in goal_state for color in tube if tube) 
+
+    # Initialize color_positions with the appropriate range
+    color_positions = {color: [] for color in range(max_color + 1)}  
 
     for i, tank in enumerate(goal_state):
         for j, color in enumerate(tank):
@@ -87,11 +106,16 @@ def improved_heuristic(current_state, goal_state, empty_tube_weight=10, color_co
         for j, color in enumerate(tank):
             if color_positions[color]:
                 goal_i, goal_j = color_positions[color][0]  # Use the first goal position for this color
-                total_distance += abs(i - goal_i) + abs(j - goal_j)
+
+                # Calculate Manhattan distance and penalize if not in correct order
+                if j > goal_j:  # Color is too low in the current tube
+                    total_distance += 2 * abs(j - goal_j) 
+                else:
+                    total_distance += abs(i - goal_i) + abs(j - goal_j)
 
                 # Add bonus for top colors
                 if j == len(tank) - 1:  
-                    total_distance -= top_color_weight 
+                    total_distance -= top_color_weight
 
                 # Add bonus for bottom colors
                 if j == 0:
@@ -105,11 +129,18 @@ def improved_heuristic(current_state, goal_state, empty_tube_weight=10, color_co
             if i != goal_i:
                 total_distance += color_counts[color] * abundant_color_weight
 
+
+    # Prioritize colors with fewer empty tubes to target:
+    for color, positions in color_positions.items():
+        empty_tubes_for_color = sum(1 for tube in current_state if not tube or tube[-1] == color)
+        total_distance += (10 - empty_tubes_for_color) * abundant_color_weight  # Adjust the weight as needed
+
     # Add bonus for empty tubes
     empty_tubes = sum(1 for tank in current_state if not tank)
     total_distance -= empty_tubes * empty_tube_weight
 
     return total_distance
+
 
 def astar(start_state, goal_state, heuristic, successors, max_colors_per_tube):
     """
